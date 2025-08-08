@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Modern Cashier App</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* CSS variables for themes */
+  :root {
+    --bg: #f9f9f9;
+    --text: #222;
+    --primary: #3f51b5;
+    --primary-light: #c5cae9;
+    --card-bg: #fff;
+    --card-shadow: rgba(0,0,0,0.15);
+    --input-bg: #fff;
+    --input-border: #ccc;
+    --button-bg: var(--primary);
+    --button-text: #fff;
+    --danger: #d32f2f;
+    --success: #388e3c;
+    --info: #1976d2;
+  }
+
+  [data-theme="dark"] {
+    --bg: #121212;
+    --text: #eee;
+    --primary: #7986cb;
+    --primary-light: #aab6fe;
+    --card-bg: #1e1e1e;
+    --card-shadow: rgba(255,255,255,0.1);
+    --input-bg: #2a2a2a;
+    --input-border: #555;
+    --button-bg: #7986cb;
+    --button-text: #121212;
+    --danger: #ef5350;
+    --success: #66bb6a;
+    --info: #64b5f6;
+  }
+
+  /* Container and layout */
+  #app {
+    flex: 1;
+    max-width: 1080px;
+    margin: 1rem auto;
+    padding: 0 1rem 2rem;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  header h1 {
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: var(--primary);
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    transition: background-color 0.2s;
+  }
+  button:hover {
+    background-color: var(--primary-light);
+  }
+
+  /* LOGIN SCREEN */
+  #login-screen {
+    max-width: 400px;
+    margin: 5rem auto;
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px var(--card-shadow);
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  #login-screen h2 {
+    margin-bottom: 1rem;
+  }
+
+  #login-username,
+  #login-password {
+    font-size: 1.3rem;
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1.8px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text);
+    text-align: center;
+  }
+
+  #login-password {
+    letter-spacing: 0.3em;
+  }
+
+  #login-error {
+    color: var(--danger);
+    margin-bottom: 1rem;
+    min-height: 1.2rem;
+  }
+
+  /* DASHBOARD */
+  #dashboard {
+    display: none;
+    flex-direction: column;
+  }
+
+  #theme-toggle {
+    background: transparent;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid var(--primary);
+    padding: 0.25rem 0.8rem;
+    border-radius: 20px;
+  }
+  #theme-toggle:hover {
+    background-color: var(--primary);
+    color: var(--button-text);
+  }
+
+  /* Cashier boxes grid */
+  #cashier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 1.4rem;
+    margin-top: 1.5rem;
+  }
+
+  /* Each cashier box */
+  .cashier-box {
+    background: var(--card-bg);
+    box-shadow: 0 6px 15px var(--card-shadow);
+    border-radius: 20px;
+    padding: 1.6rem 1.2rem 2.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 210px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    position: relative;
+  }
+  .cashier-box:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 14px 30px var(--card-shadow);
+  }
+
+  /* Different background colors for each box */
+  .cashier-box[data-id="1"] { background: #e3f2fd; color: #0d47a1; }
+  .cashier-box[data-id="2"] { background: #fce4ec; color: #880e4f; }
+  .cashier-box[data-id="3"] { background: #e8f5e9; color: #1b5e20; }
+  .cashier-box[data-id="4"] { background: #fff3e0; color: #ef6c00; }
+  .cashier-box[data-id="5"] { background: #ede7f6; color: #311b92; }
+  .cashier-box[data-id="6"] { background: #f3e5f5; color: #4a148c; }
+  .cashier-box[data-id="8"] { background: #e0f7fa; color: #006064; }
+  .cashier-box[data-id="9"] { background: #ffebee; color: #b71c1c; }
+
+  .cashier-box h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .cashier-total {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-top: 2px solid currentColor;
+    padding-top: 0.8rem;
+  }
+
+  /* Details screen */
+  #details-screen {
+    display: none;
+    margin-top: 1rem;
+    background: var(--card-bg);
+    box-shadow: 0 6px 16px var(--card-shadow);
+    border-radius: 16px;
+    padding: 1rem 1rem 2rem;
+    max-width: 720px;
+  }
+
+  #details-screen h2 {
+    margin-top: 0;
+  }
+
+  /* Form for new entry */
+  #entry-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  #entry-form input,
+  #entry-form textarea {
+    flex: 1 1 45%;
+    padding: 0.6rem 1rem;
+    border: 1.5px solid var(--input-border);
+    border-radius: 10px;
+    font-size: 1rem;
+    background-color: var(--input-bg);
+    color: var(--text);
+  }
+  #entry-form input[type="number"] {
+    max-width: 150px;
+  }
+  #entry-form textarea {
+    resize: vertical;
+    min-height: 60px;
+    flex-basis: 100%;
+  }
+
+  #entry-form button {
+    flex-basis: 100%;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    background-color: var(--success);
+    color: white;
+    font-weight: 700;
+    border-radius: 12px;
+  }
+  #entry-form button:hover {
+    background-color: #2e7d32;
+  }
+
+  /* Entry list table */
+  #entries-list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  #entries-list th, #entries-list td {
+    border-bottom: 1px solid var(--input-border);
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+  }
+  #entries-list th {
+    background-color: var(--primary-light);
+    color: var(--primary);
+  }
+  #entries-list tr:hover {
+    background-color: var(--primary-light);
+    cursor: default;
+  }
+
+  /* Buttons in entries */
+  .entry-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 6px;
+    margin-left: 0.3rem;
+    transition: background-color 0.15s ease;
+  }
+  .entry-edit {
+    color: var(--info);
+  }
+  .entry-edit:hover {
+    background-color: var(--info);
+    color: white;
+  }
+  .entry-delete {
+    color: var(--danger);
+  }
+  .entry-delete:hover {
+    background-color: var(--danger);
+    color: white;
+  }
+
+  /* Back button */
+  #back-btn {
+    margin-bottom: 1rem;
+    background-color: var(--button-bg);
+  }
+
+  /* Reports panel */
+  #reports-panel {
+    margin-top: 2rem;
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: 0 5px 14px var(--card-shadow);
+    padding: 1rem 1.2rem;
+    max-width: 720px;
+  }
+
+  #reports-panel h3 {
+    margin-top: 0;
+  }
+
+  #reports-panel label {
+    font-weight: 600;
+  }
+
+  #reports-panel select, #reports-panel input {
+    margin-left: 0.6rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text);
+    font-size: 1rem;
+  }
+
+  #reports-panel button {
+    margin-top: 1rem;
+    width: 100%;
+    background-color: var(--info);
+  }
+  #reports-panel button:hover {
+    background-color: #1565c0;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 600px) {
+    #entry-form input, #entry-form textarea {
+      flex-basis: 100%;
+    }
+  }
+</style>
+</head>
+<body data-theme="light">
+<div aria-label="Login screen" id="login-screen">
+<h2>Cashier App Login</h2>
+<p>Enter your username and 4-digit password</p>
+<input autocomplete="off" autofocus="" id="login-username" maxlength="20" placeholder="Username" type="text"/>
+<input autocomplete="off" id="login-password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="Password (4 digits)" type="password"/>
+<div aria-live="assertive" id="login-error" role="alert"></div>
+<button id="login-btn">Login</button>
+<p style="margin-top: 1rem; font-size: 0.85rem; color: #555;">
+</p>
+</div>
+<div hidden="" id="app">
+<header>
+<h1>Cashier Dashboard</h1>
+<div>
+<button aria-label="Toggle dark/light theme" id="theme-toggle">🌙 Dark Mode</button>
+<button id="logout-btn" style="margin-left: 0.8rem;">Logout</button>
+</div>
+</header>
+<!-- Dashboard: cashier boxes -->
+<section id="dashboard">
+<div aria-label="Cashier list" id="cashier-grid" role="list"></div>
+</section>
+<!-- Details screen -->
+<section aria-live="polite" id="details-screen" tabindex="-1">
+<button aria-label="Back to dashboard" id="back-btn">← Back</button>
+<h2 id="details-title">Cashier Details</h2>
+<form aria-label="Add or edit entry form" id="entry-form">
+<input autocomplete="off" id="entry-amount" min="0.01" name="amount" placeholder="Amount (e.g. 12.50)" required="" step="0.01" type="number"/>
+<textarea autocomplete="off" id="entry-note" maxlength="100" name="note" placeholder="Note (optional)" rows="2"></textarea>
+<button type="submit">Add Entry</button>
+</form>
+<table aria-label="List of entries" id="entries-list">
+<thead>
+<tr>
+<th>Amount</th>
+<th>Note</th>
+<th>Date &amp; Time</th>
+<th>User</th>
+<th>Edit</th>
+<th>Delete</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</section>
+<!-- Reports panel -->
+<section aria-label="Reports panel" id="reports-panel">
+<h3>Download Reports</h3>
+<label for="report-type">Report type:</label>
+<select aria-controls="report-date" id="report-type">
+<option value="daily">Daily</option>
+<option value="monthly">Monthly</option>
+</select>
+<label for="report-date" style="margin-left:1rem;">Select date:</label>
+<input aria-required="true" id="report-date" type="date"/>
+<button id="download-csv">Download CSV</button>
+<button id="download-pdf" style="margin-top: 0.6rem;">Download PDF</button>
+</section>
+</div>
+<script>
+  function checkAndResetTotals() {
+  const now = Date.now();
+  const resetKey = 'totalsLastReset';
+  const lastReset = localStorage.getItem(resetKey);
+
+  if (!lastReset) {
+    localStorage.setItem(resetKey, now);
+  } else {
+    const diff = now - Number(lastReset);
+    const hours24 = 24 * 60 * 60 * 1000;
+
+    if (diff > hours24) {
+      // Archive data from the last reset day
+      archiveTodayData(lastReset);
+
+      // Now clear live data
+      resetCashierTotals();
+
+      // Update reset timestamp
+      localStorage.setItem(resetKey, now);
+    }
+  }
+}
+
+function archiveTodayData(timestamp) {
+  if (!timestamp) return;
+
+  // Convert timestamp to date string (e.g., "2025-08-07")
+  const dateStr = new Date(Number(timestamp)).toISOString().slice(0,10);
+
+  let archiveData = {};
+
+  for (let i = 1; i <= 9; i++) {
+    if (i === 7) continue;
+    const entries = localStorage.getItem(`cashier${i}Entries`);
+    const total = localStorage.getItem(`cashier${i}Total`);
+    archiveData[`cashier${i}`] = {
+      entries: entries ? JSON.parse(entries) : [],
+      total: total ? parseFloat(total) : 0,
+    };
+  }
+
+  localStorage.setItem(`archive_${dateStr}`, JSON.stringify(archiveData));
+}
+
+function resetCashierTotals() {
+  for (let i = 1; i <= 9; i++) {
+    if (i === 7) continue;
+    localStorage.removeItem(`cashier${i}Total`);
+    localStorage.removeItem(`cashier${i}Entries`);
+  }
+  updateDashboardUI?.();
+}
+
+
+
+(() => {
+  const admins = {
+  Malaka: '1111',
+  Dilshan: '2222',
+  Chadika: '3333',
+  Prasad: '4444',
+  ChiefCashier: '5555'
+};
+  const cashierIds = [1,2,3,4,5,6,8,9]; // Exclude 7
+
+  // DOM Elements
+  const loginScreen = document.getElementById('login-screen');
+  const loginUsernameInput = document.getElementById('login-username');
+  const loginPasswordInput = document.getElementById('login-password');
+  const loginBtn = document.getElementById('login-btn');
+  const loginError = document.getElementById('login-error');
+
+  const app = document.getElementById('app');
+  const dashboard = document.getElementById('dashboard');
+  const cashierGrid = document.getElementById('cashier-grid');
+
+  const detailsScreen = document.getElementById('details-screen');
+  const detailsTitle = document.getElementById('details-title');
+  const backBtn = document.getElementById('back-btn');
+
+  const entryForm = document.getElementById('entry-form');
+  const entryAmount = document.getElementById('entry-amount');
+  const entryNote = document.getElementById('entry-note');
+  const entriesListBody = document.querySelector('#entries-list tbody');
+
+  const logoutBtn = document.getElementById('logout-btn');
+  const themeToggleBtn = document.getElementById('theme-toggle');
+
+  const reportTypeSelect = document.getElementById('report-type');
+  const reportDateInput = document.getElementById('report-date');
+  const downloadCsvBtn = document.getElementById('download-csv');
+  const downloadPdfBtn = document.getElementById('download-pdf');
+
+  let currentUser = null;
+  let isAdmin = false;
+  let currentCashierId = null;
+  let editingEntryId = null;
+
+  // Data key for localStorage
+  const DATA_KEY = 'cashierAppData_v2';
+
+  // Load data from localStorage or init
+  function loadData() {
+    const raw = localStorage.getItem(DATA_KEY);
+    if(raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        // Ensure all cashier arrays exist
+        cashierIds.forEach(id => {
+          if(!Array.isArray(parsed[id])) parsed[id] = [];
+        });
+        return parsed;
+      } catch {
+        // ignore error and return new
+      }
+    }
+    // Return empty structure
+    const obj = {};
+    cashierIds.forEach(id => obj[id] = []);
+    return obj;
+  }
+
+  // Save data to localStorage
+  function saveData() {
+    localStorage.setItem(DATA_KEY, JSON.stringify(data));
+  }
+
+  // Generate unique ID for entries
+  function genId() {
+    return Math.random().toString(36).slice(2, 10);
+  }
+
+  // Format money
+  function formatMoney(val) {
+    return Number(val).toFixed(2);
+  }
+
+  // Format datetime nicely
+  function formatDateTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString();
+  }
+
+  // Clear form
+  function clearForm() {
+    editingEntryId = null;
+    entryForm.reset();
+    entryForm.querySelector('button[type="submit"]').textContent = 'Add Entry';
+  }
+
+  // Render cashier boxes with totals
+  function renderCashierGrid() {
+    cashierGrid.innerHTML = '';
+    cashierIds.forEach(id => {
+      const entries = data[id] || [];
+      const total = entries.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+      const box = document.createElement('div');
+      box.className = 'cashier-box';
+      box.setAttribute('data-id', id);
+      box.setAttribute('role', 'listitem');
+      box.tabIndex = 0;
+      box.innerHTML = `
+        <h3>Cashier ${id}</h3>
+        <div class="cashier-total">Total: $${formatMoney(total)}</div>
+      `;
+      cashierGrid.appendChild(box);
+    });
+  }
+
+  // Render entries list for current cashier
+  function renderEntriesList() {
+    entriesListBody.innerHTML = '';
+    if(currentCashierId === null) return;
+    const entries = data[currentCashierId];
+    entries.forEach(entry => {
+      const tr = document.createElement('tr');
+      tr.dataset.entryId = entry.id;
+
+      const amountTd = document.createElement('td');
+      amountTd.textContent = `$${formatMoney(entry.amount)}`;
+      const noteTd = document.createElement('td');
+      noteTd.textContent = entry.note || '';
+      const datetimeTd = document.createElement('td');
+      datetimeTd.textContent = formatDateTime(entry.datetime);
+      const userTd = document.createElement('td');
+      userTd.textContent = entry.user;
+
+      const editTd = document.createElement('td');
+      const deleteTd = document.createElement('td');
+
+      if(isAdmin) {
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.className = 'entry-btn entry-edit';
+        editBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          startEditEntry(entry.id);
+        });
+        editTd.appendChild(editBtn);
+
+        // Delete button
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'entry-btn entry-delete';
+        delBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          if(confirm('Delete this entry?')) {
+            deleteEntry(entry.id);
+          }
+        });
+        deleteTd.appendChild(delBtn);
+      } else {
+        editTd.textContent = '-';
+        deleteTd.textContent = '-';
+      }
+
+      tr.appendChild(amountTd);
+      tr.appendChild(noteTd);
+      tr.appendChild(datetimeTd);
+      tr.appendChild(userTd);
+      tr.appendChild(editTd);
+      tr.appendChild(deleteTd);
+
+      entriesListBody.appendChild(tr);
+    });
+  }
+
+  // Start editing an entry
+  function startEditEntry(entryId) {
+    if(currentCashierId === null) return;
+    const entry = data[currentCashierId].find(e => e.id === entryId);
+    if(!entry) return;
+    editingEntryId = entryId;
+    entryAmount.value = entry.amount;
+    entryNote.value = entry.note || '';
+    entryForm.querySelector('button[type="submit"]').textContent = 'Save Changes';
+    entryAmount.focus();
+  }
+
+  // Delete entry
+  function deleteEntry(entryId) {
+    if(currentCashierId === null) return;
+    data[currentCashierId] = data[currentCashierId].filter(e => e.id !== entryId);
+    saveData();
+    renderEntriesList();
+    renderCashierGrid();
+  }
+
+  // Add or update entry form submission
+  entryForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if(currentCashierId === null) return;
+
+    let amountVal = parseFloat(entryAmount.value);
+    if(isNaN(amountVal) || amountVal <= 0) {
+      alert('Enter a valid positive amount');
+      entryAmount.focus();
+      return;
+    }
+    amountVal = amountVal.toFixed(2);
+
+    const noteVal = entryNote.value.trim();
+
+    if(editingEntryId) {
+      // Update existing entry
+      const entry = data[currentCashierId].find(e => e.id === editingEntryId);
+      if(entry) {
+        entry.amount = amountVal;
+        entry.note = noteVal;
+        entry.datetime = new Date().toISOString();
+        entry.user = currentUser;
+      }
+      editingEntryId = null;
+    } else {
+      // Add new entry
+      data[currentCashierId].push({
+        id: genId(),
+        amount: amountVal,
+        note: noteVal,
+        datetime: new Date().toISOString(),
+        user: currentUser
+      });
+    }
+
+    saveData();
+    renderEntriesList();
+    renderCashierGrid();
+    clearForm();
+  });
+
+  // Show cashier details screen
+  function showDetails(cashierId) {
+    currentCashierId = cashierId;
+    detailsTitle.textContent = `Cashier ${cashierId} Details`;
+    renderEntriesList();
+    clearForm();
+    dashboard.style.display = 'none';
+    detailsScreen.style.display = 'block';
+    detailsScreen.focus();
+  }
+
+  // Back to dashboard
+  backBtn.addEventListener('click', () => {
+    currentCashierId = null;
+    detailsScreen.style.display = 'none';
+    dashboard.style.display = 'flex';
+    clearForm();
+  });
+
+  // Cashier box click event
+  cashierGrid.addEventListener('click', e => {
+    let box = e.target;
+    while(box && !box.classList.contains('cashier-box')) {
+      box = box.parentElement;
+    }
+    if(box) {
+      const id = parseInt(box.getAttribute('data-id'));
+      showDetails(id);
+    }
+  });
+  cashierGrid.addEventListener('keydown', e => {
+    if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('cashier-box')) {
+      e.preventDefault();
+      const id = parseInt(e.target.getAttribute('data-id'));
+      showDetails(id);
+    }
+  });
+
+  
+checkAndResetTotals();
+// Login handling
+  
+loginBtn.addEventListener('click', () => {
+  const username = loginUsernameInput.value.trim();
+  const password = loginPasswordInput.value.trim();
+
+  if (!username) {
+    loginError.textContent = 'Please enter your username.';
+    return;
+  }
+  if (!/^\d{4}$/.test(password)) {
+    loginError.textContent = 'Password must be exactly 4 digits.';
+    return;
+  }
+
+  if ((admins[username] && admins[username] === password) || (password === '5555' && (username === 'Malaka' || username === 'ChiefCashier'))) {
+    currentUser = username;
+    isAdmin = (username !== 'ChiefCashier');
+    loginError.textContent = '';
+    loginScreen.style.display = 'none';
+    app.hidden = false;
+    dashboard.style.display = 'flex';
+    cleanupOldEntries();
+    renderCashierGrid();
+    loadTheme();
+    setDefaultReportDate();
+    loginUsernameInput.value = '';
+    loginPasswordInput.value = '';
+    alert(`Welcome ${username}!`);
+  } else {
+    loginError.textContent = 'Invalid username or password.';
+  }
+});
+loginUsernameInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') loginBtn.click();
+  });
+  loginPasswordInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') loginBtn.click();
+  });
+
+  // Logout
+  logoutBtn.addEventListener('click', () => {
+    currentUser = null;
+    isAdmin = false;
+    currentCashierId = null;
+    editingEntryId = null;
+    app.hidden = true;
+    detailsScreen.style.display = 'none';
+    dashboard.style.display = 'none';
+    loginScreen.style.display = 'block';
+    loginUsernameInput.focus();
+  });
+
+  // Auto delete entries older than 31 days
+  function cleanupOldEntries() {
+    const now = new Date();
+    cashierIds.forEach(id => {
+      data[id] = data[id].filter(e => {
+        const d = new Date(e.datetime);
+        return (now - d) / (1000*60*60*24) <= 31;
+      });
+    });
+    saveData();
+  }
+
+  // Theme toggle
+  themeToggleBtn.addEventListener('click', () => {
+    const currentTheme = document.body.getAttribute('data-theme');
+    if(currentTheme === 'dark') {
+      document.body.setAttribute('data-theme', 'light');
+      localStorage.setItem('cashierAppTheme', 'light');
+    } else {
+      document.body.setAttribute('data-theme', 'dark');
+      localStorage.setItem('cashierAppTheme', 'dark');
+    }
+    updateThemeButton();
+  });
+
+  function loadTheme() {
+    const theme = localStorage.getItem('cashierAppTheme') || 'light';
+    document.body.setAttribute('data-theme', theme);
+    updateThemeButton();
+  }
+
+  function updateThemeButton() {
+    const isDark = document.body.getAttribute('data-theme') === 'dark';
+    themeToggleBtn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+
+  // REPORTS LOGIC
+
+  // Download CSV
+  function downloadCSV(entries, filename) {
+    const headers = ['Cashier','Amount','Note','Date & Time','User'];
+    const rows = entries.map(e => [
+      e.cashier,
+      e.amount,
+      `"${(e.note||'').replace(/"/g, '""')}"`,
+      e.datetime,
+      e.user
+    ]);
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Download PDF using jsPDF library from CDN
+  function downloadPDF(entries, filename) {
+    // Load jsPDF dynamically (small lib ~300KB)
+    if(typeof window.jspdf === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+        generatePDF(entries, filename);
+      };
+      document.body.appendChild(script);
+    } else {
+      generatePDF(entries, filename);
+    }
+  }
+
+  function generatePDF(entries, filename) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Cashier Report', 14, 20);
+    let y = 30;
+    doc.setFontSize(10);
+
+    const pageHeight = doc.internal.pageSize.height;
+    const lineHeight = 7;
+
+    // Headers
+    doc.text('Cashier', 14, y);
+    doc.text('Amount', 40, y);
+    doc.text('Note', 65, y);
+    doc.text('Date & Time', 120, y);
+    doc.text('User', 170, y);
+    y += lineHeight;
+
+    entries.forEach(e => {
+      if(y > pageHeight - 20) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(e.cashier.toString(), 14, y);
+      doc.text(e.amount.toString(), 40, y);
+      const note = e.note || '';
+      doc.text(note.length > 30 ? note.slice(0, 27) + '...' : note, 65, y);
+      doc.text(e.datetime, 120, y);
+      doc.text(e.user, 170, y);
+      y += lineHeight;
+    });
+
+    doc.save(filename);
+  }
+
+  // Get entries by filter
+  function getFilteredEntries(type, dateStr) {
+    let filtered = [];
+    cashierIds.forEach(id => {
+      const entries = data[id] || [];
+      entries.forEach(e => {
+        const d = new Date(e.datetime);
+        const dateISO = d.toISOString();
+        if(type === 'daily') {
+          if(dateStr === d.toISOString().slice(0,10)) {
+            filtered.push({
+              cashier: `Cashier ${id}`,
+              amount: `$${formatMoney(e.amount)}`,
+              note: e.note,
+              datetime: d.toLocaleString(),
+              user: e.user
+            });
+          }
+        } else if(type === 'monthly') {
+          if(dateStr.slice(0,7) === dateISO.slice(0,7)) {
+            filtered.push({
+              cashier: `Cashier ${id}`,
+              amount: `$${formatMoney(e.amount)}`,
+              note: e.note,
+              datetime: d.toLocaleString(),
+              user: e.user
+            });
+          }
+        }
+      });
+    });
+    return filtered;
+  }
+
+  // Set default report date to today
+  function setDefaultReportDate() {
+    const today = new Date().toISOString().slice(0,10);
+    reportDateInput.value = today;
+  }
+
+  // Download CSV click
+  downloadCsvBtn.addEventListener('click', () => {
+    const type = reportTypeSelect.value;
+    const date = reportDateInput.value;
+    if(!date) {
+      alert('Please select a date.');
+      return;
+    }
+    const entries = getFilteredEntries(type, date);
+    if(entries.length === 0) {
+      alert('No entries found for selected date.');
+      return;
+    }
+    const filename = `cashier_report_${type}_${date}.csv`;
+    downloadCSV(entries, filename);
+  });
+
+  // Download PDF click
+  downloadPdfBtn.addEventListener('click', () => {
+    if (currentUser === 'ChiefCashier') { alert('PDF download not allowed for Chief Cashier.'); return; }
+    const type = reportTypeSelect.value;
+    const date = reportDateInput.value;
+    if(!date) {
+      alert('Please select a date.');
+      return;
+    }
+    const entries = getFilteredEntries(type, date);
+    if(entries.length === 0) {
+      alert('No entries found for selected date.');
+      return;
+    }
+    const filename = `cashier_report_${type}_${date}.pdf`;
+    downloadPDF(entries, filename);
+  });
+
+  // Load saved data
+  let data = loadData();
+
+  // Initialize theme on load
+  loadTheme();
+
+  // Keyboard shortcuts for accessibility (optional)
+  document.body.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && detailsScreen.style.display === 'block') {
+      backBtn.click();
+    }
+  });
+
+  // Initialization after page load
+  function init() {
+    loginScreen.style.display = 'block';
+    app.hidden = true;
+    dashboard.style.display = 'none';
+    detailsScreen.style.display = 'none';
+    loginUsernameInput.focus();
+    setDefaultReportDate();
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>
